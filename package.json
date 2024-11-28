@@ -1,20 +1,21 @@
 {
-  "name": "@lilbunnyrabbit/npm-package-template",
+  "name": "@lilbunnyrabbit/event-emitter",
   "version": "0.0.0",
-  "description": "Template repository for creating `npm` packages.",
+  "description": "A lightweight and type-safe EventEmitter implementation for TypeScript.",
   "keywords": [
-    "node",
-    "npm",
-    "javascript",
-    "typescript"
+    "typescript",
+    "eventemitter",
+    "events",
+    "event-driven",
+    "typed-events"
   ],
-  "homepage": "https://github.com/lilBunnyRabbit/npm-package-template#readme",
+  "homepage": "https://github.com/lilBunnyRabbit/event-emitter#readme",
   "bugs": {
-    "url": "https://github.com/lilBunnyRabbit/npm-package-template/issues"
+    "url": "https://github.com/lilBunnyRabbit/event-emitter/issues"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/lilBunnyRabbit/npm-package-template.git"
+    "url": "https://github.com/lilBunnyRabbit/event-emitter.git"
   },
   "license": "MIT",
   "author": "Andraž Mesarič-Sirec <amesaricsirec@gmail.com>",
@@ -45,12 +46,13 @@
     "generate:docs": "typedoc"
   },
   "devDependencies": {
-    "@changesets/cli": "^2.27.1",
-    "@types/jest": "^29.5.12",
-    "rimraf": "^5.0.5",
-    "ts-jest": "^29.1.2",
-    "typedoc": "^0.25.11",
-    "typescript": "^5.3.3"
+    "@changesets/cli": "^2.27.10",
+    "@types/jest": "^29.5.14",
+    "rimraf": "^6.0.1",
+    "ts-jest": "^29.2.5",
+    "typedoc": "^0.27.0",
+    "typedoc-plugin-markdown": "^4.3.0",
+    "typescript": "^5.7.2"
   },
   "engines": {
     "node": ">=14.0.0",
