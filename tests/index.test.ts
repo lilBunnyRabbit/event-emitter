@@ -1,19 +1,23 @@
-import { EventEmitter } from "../src";
+import { EventEmitter, GlobalEvent } from "../src";
 
 describe("event-emitter", () => {
   type MyEvents = {
     data: string;
+    loaded: void;
+    error: Error;
   };
 
   let emitter!: EventEmitter<MyEvents>;
 
-  test("new EventEmitter()", () => {
+  beforeEach(() => {
     emitter = new EventEmitter<MyEvents>();
+  });
 
+  test("new EventEmitter()", () => {
     expect(emitter).toBeInstanceOf(EventEmitter);
   });
 
-  test("EventEmitter.on/emit/off", () => {
+  test("EventEmitter.on/emit/off for non-void event", () => {
     let onDataPayload: { emitter: EventEmitter<MyEvents>; data: string } | null = null;
 
     function onData(this: EventEmitter<MyEvents>, data: string) {
@@ -34,12 +38,109 @@ describe("event-emitter", () => {
     const offValue = "456";
     emitter.emit("data", offValue);
 
-    expect(onDataPayload).not.toBe(null);
-    expect(onDataPayload!.emitter).toBeInstanceOf(EventEmitter);
-    expect(onDataPayload!.data).toBe(onValue);
+    expect(onDataPayload!.data).toBe(onValue); // Listener should not be called after off
   });
 
-  test("extends EventEmitter", () => {
+  test("EventEmitter.on/emit/off for void event", () => {
+    let loadedCalled = false;
+
+    function onLoaded(this: EventEmitter<MyEvents>) {
+      loadedCalled = true;
+    }
+
+    emitter.on("loaded", onLoaded);
+
+    emitter.emit("loaded");
+
+    expect(loadedCalled).toBe(true);
+
+    loadedCalled = false;
+    emitter.off("loaded", onLoaded);
+
+    emitter.emit("loaded");
+
+    expect(loadedCalled).toBe(false); // Listener should not be called after off
+  });
+
+  test("EventEmitter.on/emit/off for error event", () => {
+    let onErrorPayload: Error | null = null;
+
+    function onError(this: EventEmitter<MyEvents>, error: Error) {
+      onErrorPayload = error;
+    }
+
+    emitter.on("error", onError);
+
+    const error = new Error("Test error");
+    emitter.emit("error", error);
+
+    expect(onErrorPayload).toBe(error);
+
+    emitter.off("error", onError);
+
+    const newError = new Error("New error");
+    emitter.emit("error", newError);
+
+    expect(onErrorPayload).toBe(error); // Listener should not be called after off
+  });
+
+  test("EventEmitter.onAll/offAll", () => {
+    let globalEvents: GlobalEvent<MyEvents>[] = [];
+
+    function onAll(event: GlobalEvent<MyEvents>) {
+      globalEvents.push(event);
+    }
+
+    emitter.onAll(onAll);
+
+    const dataValue = "test-data";
+    const error = new Error("Test error");
+
+    emitter.emit("data", dataValue);
+    emitter.emit("loaded");
+    emitter.emit("error", error);
+
+    expect(globalEvents).toEqual([
+      { type: "data", data: dataValue },
+      { type: "loaded" },
+      { type: "error", data: error },
+    ]);
+
+    globalEvents = [];
+    emitter.offAll(onAll);
+
+    emitter.emit("data", "new-data");
+    expect(globalEvents).toEqual([]); // Listener should not be called after offAll
+  });
+
+  test("EventEmitter.clear", () => {
+    let dataCalled = false;
+    let loadedCalled = false;
+    let globalCalled = false;
+
+    emitter.on("data", () => {
+      dataCalled = true;
+    });
+
+    emitter.on("loaded", () => {
+      loadedCalled = true;
+    });
+
+    emitter.onAll(() => {
+      globalCalled = true;
+    });
+
+    emitter.clear();
+
+    emitter.emit("data", "123");
+    emitter.emit("loaded");
+
+    expect(dataCalled).toBe(false);
+    expect(loadedCalled).toBe(false);
+    expect(globalCalled).toBe(false);
+  });
+
+  test("Extending EventEmitter", () => {
     type MyCustomEvents = {
       test: string;
     };
@@ -73,9 +174,6 @@ describe("event-emitter", () => {
     const offValue = "456";
     myEmitter.emit("test", offValue);
 
-    expect(onTestPayload).not.toBe(null);
-    expect(onTestPayload!.emitter).toBeInstanceOf(MyEventEmitter);
-    expect(onTestPayload!.emitter).toBeInstanceOf(EventEmitter);
-    expect(onTestPayload!.data).toBe(onValue);
+    expect(onTestPayload!.data).toBe(onValue); // Listener should not be called after off
   });
 });

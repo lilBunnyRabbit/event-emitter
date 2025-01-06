@@ -57,6 +57,18 @@ emitter.on("error", (error: Error) => {
 });
 ```
 
+#### Registering a Global Listener
+
+If you want to listen for **all** events with a single callback, use `EventEmitter.onAll`. The listener function receives an object containing the event type and any associated data:
+
+```ts
+emitter.onAll((event: GlobalEvent<MyEvents>) => {
+  console.log(`Global listener caught event of type "${String(event.type)}"`, event.data);
+});
+```
+
+This is especially useful when you need to handle different event types in one centralized place.
+
 ### Removing Event Listeners
 
 You can remove a specific event listener by using the `EventEmitter.off` method,
@@ -71,6 +83,32 @@ emitter.on("error", onError);
 
 emitter.off("error", onError);
 ```
+
+#### Removing a Global Listener
+
+To remove the callback you registered via `EventEmitter.onAll`, call `EventEmitter.offAll` with the same function:
+
+```ts
+const globalListener = (event: GlobalEvent<MyEvents>) => {
+  console.log(`Event "${String(event.type)}"`, event.data);
+};
+
+emitter.onAll(globalListener);
+
+// ...
+
+emitter.offAll(globalListener);
+```
+
+#### Removing All Listeners
+
+If you need to remove **all** listeners (both event-specific and global) at once, you can use the `clear` method:
+
+```ts
+emitter.clear(); // Removes all event listeners and global listeners
+```
+
+After calling `EventEmitter.clear`, no existing listeners will be triggered unless you re-register them.
 
 ### Emitting Events
 

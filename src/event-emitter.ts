@@ -1,4 +1,4 @@
-import { EventListener } from "./types";
+import { EventListener, EventMap, GlobalEvent, GlobalEventListener } from "./types";
 
 /**
  * Event emitter class capable of emitting and listening for typed events.
@@ -17,10 +17,12 @@ import { EventListener } from "./types";
  * const emitter = new EventEmitter<MyEvents>();
  * ```
  */
-export class EventEmitter<TEvents extends Record<PropertyKey, unknown>> {
-  private _events: Partial<{
-    [TType in keyof TEvents]: Array<EventListener<TEvents, TEvents[TType], this>>;
+export class EventEmitter<TEvents extends EventMap> {
+  private listeners: Partial<{
+    [TType in keyof TEvents]: Set<EventListener<TEvents, TEvents[TType], this>>;
   }> = {};
+
+  private globalListeners: Set<GlobalEventListener<TEvents, this>> = new Set();
 
   /**
    * Adds an event listener for a specified event type.
@@ -51,11 +53,11 @@ export class EventEmitter<TEvents extends Record<PropertyKey, unknown>> {
    * ```
    */
   public on<TType extends keyof TEvents>(type: TType, listener: EventListener<TEvents, TEvents[TType], this>): this {
-    if (!(type in this._events)) {
-      this._events[type] = [];
+    if (!(type in this.listeners)) {
+      this.listeners[type] = new Set();
     }
 
-    this._events[type]!.push(listener);
+    this.listeners[type]!.add(listener);
 
     return this;
   }
@@ -81,15 +83,60 @@ export class EventEmitter<TEvents extends Record<PropertyKey, unknown>> {
    * ```
    */
   public off<TType extends keyof TEvents>(type: TType, listener: EventListener<TEvents, TEvents[TType], this>): this {
-    if (this._events[type] !== undefined) {
-      this._events[type] = this._events[type]!.filter((savedListener) => savedListener !== listener);
+    if (this.listeners[type] !== undefined) {
+      this.listeners[type]!.delete(listener);
     }
 
     return this;
   }
 
   /**
+   * Adds a global event listener that is called for every emitted event.
+   *
+   * @param listener - The global event listener to add.
+   * @returns The {@link EventEmitter} instance itself, allowing for method chaining.
+   *
+   * @example
+   * ```ts
+   * emitter.onAll((event: GlobalEvent<TEvents>) => {
+   *   console.log(`Event of type ${String(event.type)} received`, event.data);
+   * });
+   * ```
+   */
+  public onAll(listener: GlobalEventListener<TEvents, this>) {
+    this.globalListeners.add(listener);
+
+    return this;
+  }
+
+  /**
+   * Removes a previously registered global event listener.
+   *
+   * @param listener - The global event listener to remove.
+   * @returns The {@link EventEmitter} instance itself, allowing for method chaining.
+   *
+   * @example
+   * ```ts
+   * const globalListener = (event: GlobalEvent<TEvents>) => {
+   *   console.log(`Event of type ${String(event.type)} received`, event.data);
+   * };
+   *
+   * emitter.onAll(globalListener);
+   *
+   * // ...
+   *
+   * emitter.offAll(globalListener);
+   * ```
+   */
+  public offAll(listener: GlobalEventListener<TEvents, this>) {
+    this.globalListeners.delete(listener);
+
+    return this;
+  }
+
+  /**
    * Emits an event of a specific type, invoking all registered listeners for that event type with the provided data.
+   * Also calls any global event listeners with a {@link GlobalEvent} object.
    *
    * @template TType - Event type.
    * @param type - The identifier for the event type to emit.
@@ -107,7 +154,38 @@ export class EventEmitter<TEvents extends Record<PropertyKey, unknown>> {
     type: TType,
     ...data: TEvents[TType] extends void ? [] : [data: TEvents[TType]]
   ): this {
-    this._events[type]?.forEach((listener) => listener.apply(this, data));
+    this.listeners[type]?.forEach((listener) => listener.apply(this, data));
+
+    const globalEvent = {
+      type,
+      data: data.length ? data[0] : undefined,
+    } as GlobalEvent<TEvents>;
+
+    for (const listener of this.globalListeners) {
+      listener.call(this, globalEvent);
+    }
+
+    return this;
+  }
+
+  /**
+   * Removes all listeners for all event types, as well as all global listeners.
+   *
+   * @returns The {@link EventEmitter} instance itself, allowing for method chaining.
+   *
+   * @example
+   * ```ts
+   * emitter.clear(); // No more event listeners remain
+   * ```
+   */
+  public clear() {
+    for (const key in this.listeners) {
+      if (Object.prototype.hasOwnProperty.call(this.listeners, key)) {
+        delete this.listeners[key];
+      }
+    }
+
+    this.globalListeners.clear();
 
     return this;
   }
