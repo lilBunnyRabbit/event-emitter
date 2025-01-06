@@ -167,6 +167,10 @@ In this example, `MyService` extends the `EventEmitter` class, adding a custom m
 This method demonstrates how to `EventEmitter.emit` `dataLoaded` and `error` events,
 integrating the event-emitting functionality into a more complex operation.
 
+## Documentation
+
+If you're looking for detailed API docs, check out the [full documentation](./docs/globals.md) generated via [Typedoc](https://typedoc.org/).
+
 ## Development
 
 This section provides a guide for developers to set up the project environment and utilize various npm scripts defined in the project for efficient development and release processes.
