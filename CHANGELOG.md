@@ -1,5 +1,11 @@
 # @lilbunnyrabbit/event-emitter
 
+## 0.1.1
+
+### Patch Changes
+
+- ab2e684: Updates README
+
 ## 0.1.0
 
 ### Minor Changes
