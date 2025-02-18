@@ -1,5 +1,11 @@
 # @lilbunnyrabbit/event-emitter
 
+## 0.1.2
+
+### Patch Changes
+
+- cebe001: docs: GitHub Sponsor
+
 ## 0.1.1
 
 ### Patch Changes
